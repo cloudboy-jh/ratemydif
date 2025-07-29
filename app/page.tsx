@@ -1,97 +1,146 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useSession, signIn } from "next-auth/react"
 import { Button } from "@/components/ui/button"
-import { Moon, Sun, ArrowUpDown, Pencil } from "lucide-react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { ArrowUpDown, Github, RefreshCw, Home, Globe, Lock, ChevronRight, ChevronDown } from "lucide-react"
 import { ChangelogList } from "@/components/changelog-list"
-import { AddChangeDialog } from "@/components/add-change-dialog"
+
+import { Navigation } from "@/components/navigation"
+
+interface Repository {
+  id: number
+  name: string
+  full_name: string
+  private: boolean
+  description: string | null
+  html_url: string
+  updated_at: string
+}
+
+type SelectedRepository = {
+  owner: string
+  name: string
+  fullName: string
+}
 
 type ChangelogEntry = {
   title: string
   date: string
-  repoUrl: string
+  repoLink: string
   summary: string
 }
 
-const initialChangelogData: ChangelogEntry[] = [
-  {
-    title: "Improved File Uploads",
-    date: "July 29, 2025",
-    repoUrl: "https://github.com/vercel/next.js/pull/12345",
-    summary: `
-- Added support for drag-and-drop file uploads.
-- Increased the maximum file size limit to 100MB.
-- Improved error handling for failed uploads.
-    `.trim(),
-  },
-  {
-    title: "New Dashboard Analytics",
-    date: "July 22, 2025",
-    repoUrl: "https://github.com/vercel/next.js/pull/12340",
-    summary: `
-- Introduced a new analytics section in the user dashboard.
-- Added real-time visitor tracking.
-- Included customizable date ranges for reports.
-    `.trim(),
-  },
-  {
-    title: "Dark Mode Support",
-    date: "July 15, 2025",
-    repoUrl: "https://github.com/vercel/next.js/pull/12333",
-    summary: `
-- Implemented a site-wide dark mode theme.
-- Users can now toggle between light and dark modes.
-- Saved user preference in local storage.
-    `.trim(),
-  },
-  {
-    title: "API Performance Enhancements",
-    date: "July 08, 2025",
-    repoUrl: "https://github.com/vercel/next.js/pull/12321",
-    summary: `
-- Optimized database queries for faster API responses.
-- Reduced average API latency by 30%.
-- Implemented caching for frequently accessed endpoints.
-    `.trim(),
-  },
-  {
-    title: "User Authentication Overhaul",
-    date: "July 01, 2025",
-    repoUrl: "https://github.com/vercel/next.js/pull/12315",
-    summary: `
-- Migrated to OAuth 2.0 for improved security.
-- Added support for social login providers.
-- Implemented two-factor authentication.
-- Enhanced password reset functionality.
-    `.trim(),
-  },
-]
-
 export default function ChangelogPage() {
-  const [isDarkMode, setIsDarkMode] = useState(false)
-  const [changelogData, setChangelogData] = useState<ChangelogEntry[]>(initialChangelogData)
+  const { data: session, status } = useSession()
+  const [changelogData, setChangelogData] = useState<ChangelogEntry[]>([])
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest")
-  const [title, setTitle] = useState("Changelog")
-  const [isEditingTitle, setIsEditingTitle] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [isSorting, setIsSorting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [selectedRepo, setSelectedRepo] = useState<SelectedRepository | null>(null)
+  const [repositories, setRepositories] = useState<Repository[]>([])
+  const [loadingRepos, setLoadingRepos] = useState(false)
 
   useEffect(() => {
-    const root = window.document.documentElement
-    if (isDarkMode) {
-      root.classList.add("dark")
-    } else {
-      root.classList.remove("dark")
+    // Check if user is authenticated and has selected a repository
+    const selectedRepoStr = localStorage.getItem('selectedRepository')
+    if (selectedRepoStr) {
+      setSelectedRepo(JSON.parse(selectedRepoStr))
     }
-  }, [isDarkMode])
+  }, [])
 
-  const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode)
+  useEffect(() => {
+    if (session?.accessToken) {
+      console.log('Session and access token available, fetching repositories...')
+      fetchRepositories()
+    } else if (session && !session.accessToken) {
+      console.log('Session exists but no accessToken')
+      setError('Authentication token missing. Please try signing in again.')
+    } else if (status === 'unauthenticated') {
+      console.log('User is not authenticated')
+    }
+  }, [session, status])
+
+  const fetchRepositories = async () => {
+    setLoadingRepos(true)
+    try {
+      console.log('Fetching repositories...')
+      const response = await fetch('/api/repositories')
+      console.log('Response status:', response.status)
+      
+      if (response.ok) {
+        const data = await response.json()
+        console.log('Repositories fetched:', data.length)
+        setRepositories(data)
+      } else {
+        let errorData
+        try {
+          errorData = await response.json()
+        } catch (parseError) {
+          errorData = { error: 'Failed to parse error response' }
+        }
+        console.error('Failed to fetch repositories:', errorData)
+        setError(errorData.error || 'Failed to fetch repositories')
+      }
+    } catch (error) {
+      console.error('Failed to fetch repositories:', error)
+      setError('Network error while fetching repositories')
+    } finally {
+      setLoadingRepos(false)
+    }
   }
 
-  const handleAddEntry = (newEntry: ChangelogEntry) => {
-    setChangelogData([newEntry, ...changelogData])
+  const handleRepoSelect = (repo: Repository) => {
+    setSelectedRepo({
+      owner: repo.full_name.split('/')[0],
+      name: repo.name,
+      fullName: repo.full_name
+    })
+    // Store in localStorage for the changelog page
+    localStorage.setItem('selectedRepository', JSON.stringify({
+      owner: repo.full_name.split('/')[0],
+      name: repo.name,
+      fullName: repo.full_name
+    }))
   }
 
-  const sortByDate = () => {
+  const fetchGitHubCommits = async () => {
+    setIsLoading(true)
+    setError(null)
+    
+    try {
+      // Get selected repository from localStorage
+      const selectedRepoStr = localStorage.getItem('selectedRepository')
+      if (!selectedRepoStr) {
+        throw new Error('No repository selected. Please select a repository.')
+      }
+      
+      const selectedRepo = JSON.parse(selectedRepoStr)
+      
+      const response = await fetch(`/api/changelog?owner=${selectedRepo.owner}&repo=${selectedRepo.name}`)
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to fetch commits')
+      }
+      
+      const commits = await response.json()
+      setChangelogData(commits)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const sortByDate = async () => {
+    setIsSorting(true)
+    
+    // Add a small delay to show the loading state for better UX
+    await new Promise(resolve => setTimeout(resolve, 100))
+    
     const newSortOrder = sortOrder === "newest" ? "oldest" : "newest"
     setSortOrder(newSortOrder)
 
@@ -107,72 +156,243 @@ export default function ChangelogPage() {
     })
 
     setChangelogData(sortedData)
+    setIsSorting(false)
+  }
+
+  // Auto-fetch commits when repository is selected
+  useEffect(() => {
+    if (selectedRepo) {
+      fetchGitHubCommits()
+    }
+  }, [selectedRepo])
+
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen bg-white dark:bg-zinc-950 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-zinc-900 dark:border-zinc-100 mx-auto mb-4"></div>
+          <p className="text-zinc-600 dark:text-zinc-400">Loading...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
-    <div className="bg-white dark:bg-zinc-950 min-h-screen transition-colors duration-300">
-      <div className="container mx-auto max-w-3xl px-4 py-12 sm:py-12">
-        <header className="flex justify-between items-center mb-10">
-          <div className="flex items-center">
-            {isEditingTitle ? (
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                onBlur={() => setIsEditingTitle(false)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    setIsEditingTitle(false)
-                  }
-                }}
-                className="text-4xl font-bold font-mono text-zinc-900 dark:text-zinc-50 bg-transparent border-none outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-600 rounded px-2"
-                autoFocus
-              />
-            ) : (
-              <h1
-                className="text-4xl font-bold font-mono text-zinc-900 dark:text-zinc-50 cursor-pointer hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors px-2"
-                onClick={() => setIsEditingTitle(true)}
+    <div className="min-h-screen bg-white dark:bg-zinc-950 transition-colors duration-300">
+      <Navigation />
+      <div className="container mx-auto max-w-4xl px-4 py-12">
+        {!session ? (
+          <div className="flex items-center justify-center min-h-[60vh]">
+            <div className="max-w-md mx-auto text-center">
+              <div className="mb-8">
+                <img src="/1.svg" alt="Logo" className="h-28 w-auto mx-auto" />
+                <div className="mt-4 flex justify-center">
+                  <ChevronDown className="h-8 w-8 text-orange-500" />
+                </div>
+              </div>
+              <Card className="bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800">
+                <CardHeader className="text-center">
+                  <CardTitle className="font-mono text-zinc-900 dark:text-zinc-100">
+                    Get Started
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Button
+                    onClick={() => signIn('github')}
+                    className="w-full font-mono bg-zinc-900 dark:bg-zinc-100 text-zinc-100 dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200"
+                  >
+                    <Github className="w-4 h-4 mr-2" />
+                    Connect with GitHub
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        ) : !selectedRepo ? (
+          <div className="space-y-8">
+            {/* Repository Selection */}
+            <Card className="bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800">
+              <CardHeader>
+                <CardTitle className="font-mono text-zinc-900 dark:text-zinc-100">
+                  Select Repository
+                </CardTitle>
+                <CardDescription className="font-mono text-zinc-600 dark:text-zinc-400">
+                  Choose a repository to generate changelog from
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {error && (
+                  <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                    <p className="text-red-700 dark:text-red-300 font-mono text-sm mb-2">
+                      {error}
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setError(null)
+                        fetchRepositories()
+                      }}
+                      className="font-mono border-red-300 dark:border-red-600 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/20"
+                    >
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Retry
+                    </Button>
+                  </div>
+                )}
+                {loadingRepos ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-zinc-900 dark:border-zinc-100 mx-auto mb-4"></div>
+                    <p className="text-zinc-600 dark:text-zinc-400 font-mono">Loading repositories...</p>
+                  </div>
+                ) : repositories.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-zinc-600 dark:text-zinc-400 font-mono mb-4">No repositories found</p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={fetchRepositories}
+                      disabled={loadingRepos}
+                      className="font-mono"
+                    >
+                      {loadingRepos ? (
+                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                      )}
+                      {loadingRepos ? "Loading..." : "Retry"}
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="grid gap-4 max-h-[900px] overflow-y-auto">
+                    {repositories.map((repo) => (
+                      <div
+                        key={repo.id}
+                        className={`p-4 rounded-lg border cursor-pointer transition-colors ${
+                          (selectedRepo as SelectedRepository | null)?.name === repo.name
+                            ? 'bg-zinc-200 dark:bg-zinc-800 border-zinc-400 dark:border-zinc-600'
+                            : 'bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-700'
+                        }`}
+                        onClick={() => handleRepoSelect(repo)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            {repo.private ? (
+                              <Lock className="h-4 w-4 text-zinc-500" />
+                            ) : (
+                              <Globe className="h-4 w-4 text-zinc-500" />
+                            )}
+                            <div>
+                              <h3 className="font-mono font-semibold text-zinc-900 dark:text-zinc-100">
+                                {repo.name}
+                              </h3>
+                              <p className="text-sm font-mono text-zinc-600 dark:text-zinc-400">
+                                {repo.full_name}
+                              </p>
+                              {repo.description && (
+                                <p className="text-sm text-zinc-500 dark:text-zinc-500 mt-1">
+                                  {repo.description}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Badge variant={repo.private ? "secondary" : "default"} className="font-mono">
+                              {repo.private ? "Private" : "Public"}
+                            </Badge>
+                            {(selectedRepo as SelectedRepository | null)?.name === repo.name && (
+                              <ChevronRight className="h-4 w-4 text-zinc-500" />
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        ) : (
+          <div className="space-y-8">
+            {/* Repository Info */}
+            <div className="p-4 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="font-mono font-semibold text-zinc-900 dark:text-zinc-100">
+                    {selectedRepo.fullName}
+                  </h2>
+                  <p className="text-sm font-mono text-zinc-600 dark:text-zinc-400">
+                    Currently viewing changelog
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setSelectedRepo(null)
+                    localStorage.removeItem('selectedRepository')
+                  }}
+                  className="font-mono border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                >
+                  <Home className="w-4 h-4 mr-2" />
+                  Change Repository
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex justify-center items-center gap-4 mb-8 flex-wrap">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={fetchGitHubCommits}
+                disabled={isLoading}
+                className="font-mono bg-transparent border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
               >
-                {title}
-              </h1>
+                {isLoading ? (
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Github className="w-4 h-4 mr-2" />
+                )}
+                {isLoading ? "Loading..." : "Refresh Commits"}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={sortByDate}
+                disabled={isSorting}
+                className="font-mono bg-transparent border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              >
+                {isSorting ? (
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <ArrowUpDown className="w-4 h-4 mr-2" />
+                )}
+                {isSorting ? "Sorting..." : (sortOrder === "newest" ? "Oldest First" : "Newest First")}
+              </Button>
+            </div>
+
+            {error && (
+              <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                <p className="text-red-700 dark:text-red-300 font-mono text-sm">
+                  Error: {error}
+                </p>
+              </div>
+            )}
+
+            {isLoading ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-zinc-900 dark:border-zinc-100 mx-auto mb-4"></div>
+                <p className="text-zinc-600 dark:text-zinc-400 font-mono">Loading commits...</p>
+              </div>
+            ) : changelogData.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-zinc-600 dark:text-zinc-400 font-mono">No commits found in this repository.</p>
+              </div>
+            ) : (
+              <ChangelogList entries={changelogData} />
             )}
           </div>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={toggleTheme}
-            aria-label="Toggle theme"
-            className="border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 bg-transparent"
-          >
-            <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-            <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-            <span className="sr-only">Toggle theme</span>
-          </Button>
-        </header>
-
-        <div className="flex justify-center items-center gap-4 mb-8">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsEditingTitle(true)}
-            className="font-mono bg-transparent border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-          >
-            <Pencil className="w-4 h-4 mr-2" />
-            Edit Title
-          </Button>
-          <AddChangeDialog onAddEntry={handleAddEntry} />
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={sortByDate}
-            className="font-mono bg-transparent border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-          >
-            <ArrowUpDown className="w-4 h-4 mr-2" />
-            {sortOrder === "newest" ? "Oldest First" : "Newest First"}
-          </Button>
-        </div>
-
-        <ChangelogList entries={changelogData} />
+        )}
       </div>
     </div>
   )

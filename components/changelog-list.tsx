@@ -7,7 +7,7 @@ import { ChangelogItemDialog } from "@/components/changelog-item-dialog"
 type ChangelogEntry = {
   title: string
   date: string
-  repoUrl: string
+  repoLink: string
   summary: string
 }
 
@@ -39,7 +39,7 @@ export function ChangelogList({ entries }: ChangelogListProps) {
                       {entry.date}
                     </time>
                   </div>
-                  {entry.repoUrl && (
+                  {entry.repoLink && (
                     <Button
                       asChild
                       variant="outline"
@@ -47,9 +47,9 @@ export function ChangelogList({ entries }: ChangelogListProps) {
                       className="border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 bg-transparent"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <a href={entry.repoUrl} target="_blank" rel="noopener noreferrer">
+                      <a href={entry.repoLink} target="_blank" rel="noopener noreferrer">
                         <Github className="w-4 h-4 mr-2" />
-                        View Repo
+                        View Commit
                       </a>
                     </Button>
                   )}

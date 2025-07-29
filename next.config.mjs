@@ -10,7 +10,8 @@ const nextConfig = {
     unoptimized: true,
   }, 
   devIndicators: {
-    appIsrStatus: false,
+    buildActivity: false,
+    buildActivityPosition: 'bottom-right',
   },
 }
 

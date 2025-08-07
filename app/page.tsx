@@ -11,7 +11,7 @@ import { AIChangelogSummary } from "@/components/ai-changelog-summary"
 
 import { Navigation } from "@/components/navigation"
 
-type ViewMode = 'ai' | 'commits' | 'roast'
+type ViewMode = 'commits' | 'roast'
 
 interface Repository {
   id: number
@@ -45,7 +45,7 @@ export default function ChangelogPage() {
   const [error, setError] = useState<string | null>(null)
   const [selectedRepo, setSelectedRepo] = useState<SelectedRepository | null>(null)
 
-  const [currentView, setCurrentView] = useState<ViewMode>('ai')
+  const [currentView, setCurrentView] = useState<ViewMode>('roast')
   const [commitHistory, setCommitHistory] = useState<string>("")
 
   useEffect(() => {
@@ -216,6 +216,7 @@ export default function ChangelogPage() {
                   commitHistory={commitHistory}
                   onToggleView={setCurrentView}
                   showToggle={true}
+                  repoName={selectedRepo?.fullName}
                 />
                 {currentView === 'commits' && <ChangelogList entries={changelogData} />}
                 {currentView === 'roast' && <ChangelogList entries={changelogData} showRoastButtons={true} />}

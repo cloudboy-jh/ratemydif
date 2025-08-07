@@ -65,10 +65,10 @@ export function Navigation({
               variant="outline"
               size="sm"
               onClick={() => router.push('/select-repo')}
-              className="font-mono bg-transparent border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 min-h-[36px] px-2 text-xs"
+              className="font-mono bg-transparent border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 min-h-[44px] px-2 text-xs"
             >
               <Home className="w-4 h-4 mr-1 sm:mr-2" />
-              <span className="hidden sm:inline">Changelog</span>
+              <span className="hidden sm:inline">Roast</span>
             </Button>
           </div>
 
@@ -80,7 +80,7 @@ export function Navigation({
                   {selectedRepo.fullName}
                 </h2>
                 <p className="text-xs font-mono text-zinc-600 dark:text-zinc-400">
-                  Currently viewing changelog
+                  Ready for roasting
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -89,7 +89,7 @@ export function Navigation({
                   size="sm"
                   onClick={onRefreshCommits}
                   disabled={isLoading}
-                  className="font-mono bg-transparent border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 min-h-[36px] px-2 whitespace-nowrap text-xs"
+                  className="font-mono bg-transparent border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 min-h-[44px] px-2 whitespace-nowrap text-xs"
                 >
                   {isLoading ? (
                     <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
@@ -103,7 +103,7 @@ export function Navigation({
                   size="sm"
                   onClick={onSortByDate}
                   disabled={isSorting}
-                  className="font-mono bg-transparent border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 min-h-[36px] px-2 whitespace-nowrap text-xs"
+                  className="font-mono bg-transparent border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 min-h-[44px] px-2 whitespace-nowrap text-xs"
                 >
                   {isSorting ? (
                     <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
@@ -120,7 +120,7 @@ export function Navigation({
                     localStorage.removeItem('selectedRepository')
                     window.location.href = '/select-repo'
                   }}
-                  className="font-mono border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 min-h-[36px] px-2 text-xs"
+                  className="font-mono border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 min-h-[44px] px-2 text-xs"
                 >
                   <RotateCcw className="w-3 h-3 mr-1" />
                   <span>Switch</span>
@@ -157,7 +157,7 @@ export function Navigation({
               variant="outline"
               size="sm"
               onClick={() => signOut()}
-              className="font-mono bg-transparent border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 min-h-[36px] px-2 text-xs"
+              className="font-mono bg-transparent border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 min-h-[44px] px-2 text-xs"
             >
               <LogOut className="w-4 h-4 sm:mr-2" />
               <span className="hidden sm:inline">Sign Out</span>
@@ -167,7 +167,7 @@ export function Navigation({
               size="sm"
               onClick={toggleTheme}
               aria-label="Toggle theme"
-              className="font-mono bg-transparent border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 min-h-[36px] px-2 text-xs"
+              className="font-mono bg-transparent border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 min-h-[44px] px-2 text-xs"
             >
               <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
               <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />

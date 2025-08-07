@@ -6,6 +6,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Angry, Loader2, RotateCcw, Calendar, FileText } from "lucide-react"
+import { ShareRoastButton } from "@/components/share-roast-button"
 
 type ChangelogEntry = {
   title: string
@@ -63,7 +64,7 @@ export function CommitRoastDialog({ entry, children }: CommitRoastDialogProps) {
   return (
     <Dialog onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-[600px] font-mono bg-white dark:bg-zinc-900 border-red-200 dark:border-red-800 max-h-[80vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[600px] font-mono bg-white dark:bg-zinc-900 border-red-200 dark:border-red-800 max-h-[80vh] overflow-y-auto scrollable">
         <DialogHeader>
           <div className="flex items-center gap-2">
             <Angry className="w-6 h-6 text-red-600 dark:text-red-400" />
@@ -76,7 +77,7 @@ export function CommitRoastDialog({ entry, children }: CommitRoastDialogProps) {
           </p>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div id="commit-roast-content" className="space-y-6">
           {/* Commit Info */}
           <div className="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4 border border-zinc-200 dark:border-zinc-700">
             <div className="space-y-3">
@@ -104,18 +105,30 @@ export function CommitRoastDialog({ entry, children }: CommitRoastDialogProps) {
                 <h3 className="text-lg font-mono text-red-700 dark:text-red-300 font-bold">The Verdict</h3>
               </div>
               {roast && (
-                <Button
-                  onClick={() => {
-                    setRoast("")
-                    generateRoast()
-                  }}
-                  variant="outline"
-                  size="sm"
-                  className="border-red-300 dark:border-red-600 text-red-700 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
-                >
-                  <RotateCcw className="w-4 h-4 mr-2" />
-                  More Pain
-                </Button>
+                <div className="flex items-center gap-2">
+                  <ShareRoastButton
+                    roast={{
+                      content: roast,
+                      commitTitle: entry.title,
+                      commitDate: entry.date,
+                      type: 'commit'
+                    }}
+                    screenshotElementId="commit-roast-content"
+                    className="no-screenshot"
+                  />
+                  <Button
+                    onClick={() => {
+                      setRoast("")
+                      generateRoast()
+                    }}
+                    variant="outline"
+                    size="sm"
+                    className="border-red-300 dark:border-red-600 text-red-700 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 no-screenshot"
+                  >
+                    <RotateCcw className="w-4 h-4 mr-2" />
+                    More Pain
+                  </Button>
+                </div>
               )}
             </div>
             

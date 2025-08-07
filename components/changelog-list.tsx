@@ -19,7 +19,7 @@ interface ChangelogListProps {
 
 export function ChangelogList({ entries, showRoastButtons = false }: ChangelogListProps) {
   return (
-    <main className="relative h-[600px] sm:h-[800px] overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-400 dark:scrollbar-thumb-zinc-600 scrollbar-track-zinc-200 dark:scrollbar-track-zinc-800">
+    <main className="relative h-[600px] sm:h-[800px] overflow-y-auto scrollable scrollbar-thin scrollbar-thumb-zinc-400 dark:scrollbar-thumb-zinc-600 scrollbar-track-zinc-200 dark:scrollbar-track-zinc-800">
       {/* Timeline line */}
       <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-zinc-300 dark:bg-zinc-700 transform -translate-x-1/2 hidden sm:block"></div>
 

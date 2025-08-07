@@ -5,8 +5,8 @@ import './globals.css'
 import { AuthProvider } from '@/components/session-provider'
 
 export const metadata: Metadata = {
-  title: 'GitScroll',
-  description: 'AI-powered changelog viewer for GitHub repositories',
+  title: 'RateMyGit',
+  description: 'Get brutally honest AI feedback about your Git commit quality',
   icons: {
     icon: '/1.svg',
   },

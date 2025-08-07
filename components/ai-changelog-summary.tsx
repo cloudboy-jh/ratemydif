@@ -3,66 +3,36 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Loader2, Sparkles, RotateCcw, Brain, Code2, Angry } from "lucide-react"
+import { Loader2, RotateCcw, Code2, Angry } from "lucide-react"
+import { ShareRoastButton } from "@/components/share-roast-button"
 
-type ViewMode = 'ai' | 'commits' | 'roast'
+type ViewMode = 'commits' | 'roast'
 
 interface AIChangelogSummaryProps {
   commitHistory: string
   onToggleView?: (mode: ViewMode) => void
   showToggle?: boolean
+  repoName?: string
 }
 
 export function AIChangelogSummary({ 
   commitHistory, 
   onToggleView, 
-  showToggle = true 
+  showToggle = true,
+  repoName
 }: AIChangelogSummaryProps) {
-  const [summary, setSummary] = useState<string>("")
   const [roast, setRoast] = useState<string>("")
-  const [loading, setLoading] = useState(false)
   const [roastLoading, setRoastLoading] = useState(false)
   const [error, setError] = useState<string>("")
-  const [currentView, setCurrentView] = useState<ViewMode>('ai')
+  const [currentView, setCurrentView] = useState<ViewMode>('roast')
 
-  // Auto-generate summary on component mount
+  // Auto-generate roast on component mount
   useEffect(() => {
-    if (commitHistory.trim() && !summary) {
-      generateSummary()
+    if (commitHistory.trim() && !roast) {
+      generateRoast()
     }
   }, [commitHistory])
 
-  const generateSummary = async () => {
-    if (!commitHistory.trim()) {
-      setError("No commit history available to summarize")
-      return
-    }
-
-    setLoading(true)
-    setError("")
-
-    try {
-      const response = await fetch("/api/summary", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ commitHistory }),
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || "Failed to generate summary")
-      }
-
-      const data = await response.json()
-      setSummary(data.summary)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred")
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const generateRoast = async () => {
     if (!commitHistory.trim()) {
@@ -111,9 +81,6 @@ export function AIChangelogSummary({
     if (currentView === 'roast') {
       setRoast("")
       generateRoast()
-    } else {
-      setSummary("")
-      generateSummary()
     }
   }
 
@@ -123,32 +90,6 @@ export function AIChangelogSummary({
       {showToggle && (
         <div className="flex justify-center sm:justify-end gap-2 overflow-x-auto pb-2">
           <div className="flex bg-zinc-100 dark:bg-zinc-800 rounded-lg p-1 min-w-fit">
-            <Button
-              onClick={() => handleViewChange('ai')}
-              variant={currentView === 'ai' ? 'default' : 'ghost'}
-              size="sm"
-              className={`h-10 px-3 sm:h-8 min-h-[44px] sm:min-h-[32px] whitespace-nowrap ${
-                currentView === 'ai'
-                  ? 'bg-white dark:bg-zinc-700 shadow-sm text-blue-600 dark:text-blue-400'
-                  : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100'
-              }`}
-            >
-              <Brain className="w-4 h-4 mr-1" />
-              AI
-            </Button>
-            <Button
-              onClick={() => handleViewChange('commits')}
-              variant={currentView === 'commits' ? 'default' : 'ghost'}
-              size="sm"
-              className={`h-10 px-3 sm:h-8 min-h-[44px] sm:min-h-[32px] whitespace-nowrap ${
-                currentView === 'commits'
-                  ? 'bg-white dark:bg-zinc-700 shadow-sm text-green-600 dark:text-green-400'
-                  : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100'
-              }`}
-            >
-              <Code2 className="w-4 h-4 mr-1" />
-              Code
-            </Button>
             <Button
               onClick={() => handleViewChange('roast')}
               variant={currentView === 'roast' ? 'default' : 'ghost'}
@@ -162,6 +103,19 @@ export function AIChangelogSummary({
             >
               <Angry className="w-4 h-4 mr-1" />
               {roastLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : "Roast"}
+            </Button>
+            <Button
+              onClick={() => handleViewChange('commits')}
+              variant={currentView === 'commits' ? 'default' : 'ghost'}
+              size="sm"
+              className={`h-10 px-3 sm:h-8 min-h-[44px] sm:min-h-[32px] whitespace-nowrap ${
+                currentView === 'commits'
+                  ? 'bg-white dark:bg-zinc-700 shadow-sm text-green-600 dark:text-green-400'
+                  : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100'
+              }`}
+            >
+              <Code2 className="w-4 h-4 mr-1" />
+              Code
             </Button>
           </div>
         </div>
@@ -179,65 +133,6 @@ export function AIChangelogSummary({
         </Card>
       )}
 
-      {/* AI Summary view */}
-      {currentView === 'ai' && (
-        <>
-          {loading ? (
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-center gap-3 text-zinc-600 dark:text-zinc-400">
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>Generating AI summary...</span>
-                </div>
-              </CardContent>
-            </Card>
-          ) : summary ? (
-            <Card className="bg-zinc-50 dark:bg-zinc-900 border-blue-200 dark:border-blue-800">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Brain className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                    <CardTitle className="text-blue-700 dark:text-blue-300">
-                      AI-Generated Changelog Summary
-                    </CardTitle>
-                  </div>
-                  <Button 
-                    onClick={regenerateContent} 
-                    variant="outline"
-                    size="sm"
-                    className="border-blue-300 dark:border-blue-600"
-                  >
-                    <RotateCcw className="w-4 h-4 mr-2" />
-                    Regenerate
-                  </Button>
-                </div>
-                <CardDescription>
-                  Automatically generated from recent commit messages
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div 
-                  className="prose prose-sm dark:prose-invert max-w-none"
-                  dangerouslySetInnerHTML={{ 
-                    __html: summary.replace(/\n/g, '<br>') 
-                  }}
-                />
-              </CardContent>
-            </Card>
-          ) : (
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-center">
-                  <Button onClick={generateSummary} className="bg-blue-600 hover:bg-blue-700 text-white">
-                    <Brain className="w-4 h-4 mr-2" />
-                    Generate AI Summary
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </>
-      )}
 
       {/* Roast view */}
       {currentView === 'roast' && (
@@ -252,7 +147,7 @@ export function AIChangelogSummary({
               </CardContent>
             </Card>
           ) : roast ? (
-            <Card className="bg-zinc-50 dark:bg-zinc-900 border-red-200 dark:border-red-800">
+            <Card id="main-roast-card" className="bg-zinc-50 dark:bg-zinc-900 border-red-200 dark:border-red-800">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -261,15 +156,26 @@ export function AIChangelogSummary({
                       Git Roast - Brutally Honest Assessment
                     </CardTitle>
                   </div>
-                  <Button 
-                    onClick={regenerateContent} 
-                    variant="outline"
-                    size="sm"
-                    className="border-red-300 dark:border-red-600"
-                  >
-                    <RotateCcw className="w-4 h-4 mr-2" />
-                    More Pain
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <ShareRoastButton
+                      roast={{
+                        content: roast,
+                        repoName: repoName,
+                        type: 'main'
+                      }}
+                      screenshotElementId="main-roast-card"
+                      className="no-screenshot"
+                    />
+                    <Button 
+                      onClick={regenerateContent} 
+                      variant="outline"
+                      size="sm"
+                      className="border-red-300 dark:border-red-600 no-screenshot"
+                    >
+                      <RotateCcw className="w-4 h-4 mr-2" />
+                      More Pain
+                    </Button>
+                  </div>
                 </div>
                 <CardDescription className="text-red-600 dark:text-red-400">
                   ⚠️ Warning: Extremely judgmental AI feedback ahead

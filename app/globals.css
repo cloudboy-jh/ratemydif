@@ -94,4 +94,112 @@
   .dark .scrollbar-track-zinc-200::-webkit-scrollbar-track {
     background-color: #27272a;
   }
+
+  /* Screenshot mode styles */
+  .screenshot-mode .no-screenshot {
+    display: none !important;
+  }
+
+  .screenshot-mode {
+    background-color: white !important;
+    color: #1f2937 !important;
+  }
+
+  .screenshot-mode .dark\:bg-zinc-900,
+  .screenshot-mode .dark\:bg-zinc-800 {
+    background-color: #f9fafb !important;
+  }
+
+  .screenshot-mode .dark\:text-zinc-100,
+  .screenshot-mode .dark\:text-zinc-200,
+  .screenshot-mode .dark\:text-zinc-300 {
+    color: #1f2937 !important;
+  }
+
+  .screenshot-mode .dark\:border-red-800 {
+    border-color: #fecaca !important;
+  }
+
+  /* iOS Safari specific fixes */
+  
+  /* Fix for iOS Safari dropdown menus */
+  @supports (-webkit-touch-callout: none) {
+    /* Ensure dropdowns work properly on iOS */
+    [data-radix-popper-content-wrapper] {
+      transform: translate3d(0, 0, 0);
+      -webkit-transform: translate3d(0, 0, 0);
+    }
+    
+    /* Fix iOS Safari button and input styling */
+    button {
+      -webkit-appearance: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    input, select, textarea {
+      -webkit-appearance: none;
+      border-radius: 0;
+    }
+    
+    /* Fix iOS Safari modal backdrop blur */
+    [data-radix-dialog-overlay] {
+      -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(8px);
+    }
+    
+    /* Prevent iOS Safari zoom on small inputs */
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    select,
+    textarea {
+      font-size: 16px !important;
+      transform-origin: left top;
+    }
+    
+    /* Fix iOS Safari safe area */
+    body {
+      padding-bottom: env(safe-area-inset-bottom);
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+    }
+    
+    /* Fix iOS Safari scroll momentum */
+    .scrollable {
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Ensure proper touch targets on iOS */
+    [role="menuitem"],
+    [data-radix-dropdown-menu-item] {
+      min-height: 44px !important;
+      display: flex !important;
+      align-items: center !important;
+      -webkit-tap-highlight-color: transparent;
+    }
+  }
+
+  /* Additional iOS Safari fixes for better UX */
+  
+  /* Fix iOS Safari fixed positioning issues */
+  @supports (-webkit-touch-callout: none) {
+    .fixed {
+      -webkit-transform: translateZ(0);
+      transform: translateZ(0);
+    }
+  }
+  
+  /* Smooth scrolling for iOS Safari */
+  html {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Fix iOS Safari button active states */
+  button:active,
+  [role="button"]:active {
+    -webkit-tap-highlight-color: transparent;
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
+  }
 }

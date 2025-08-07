@@ -22,13 +22,23 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const prompt = `You are an extremely judgmental and brutally honest code reviewer who has absolutely no filter. Your job is to ruthlessly roast this developer's git commit history. Be mean, sarcastic, and brutal but still somewhat constructive. Point out poor commit message practices, inconsistent patterns, obvious mistakes, and questionable development habits. Use dark humor and don't hold back - but keep it professional enough that it's clearly meant to be humorous feedback rather than actual harassment.
+    // Add variation to the prompt
+    const roastStyles = [
+      "You're a brutally honest code reviewer. Roast this commit in 1-2 savage sentences. Be blunt, use profanity if needed, and call out terrible commit habits. No fluff.",
+      "You're a pissed-off senior dev. Give a harsh but hilarious 1-2 sentence roast of this commit. Swear if you want, be direct, avoid saying 'ah' constantly.",
+      "You're a no-bullshit code reviewer. Deliver a short, cutting roast in 1-2 sentences. Be brutal, funny, and don't hold back on language.",
+      "You're an angry git expert. Give a savage 1-2 sentence takedown of this commit. Use strong language, be merciless, skip the 'ah' filler words.",
+      "You're a fed-up developer. Roast this commit in 1-2 brutal sentences. Swear freely, be savage, and avoid repetitive phrases like 'ah' or 'oh'."
+    ]
+    
+    const randomStyle = roastStyles[Math.floor(Math.random() * roastStyles.length)]
+    
+    const prompt = `${randomStyle}
 
-Look at these commit messages and absolutely tear them apart:
-
+Commit:
 ${commitHistory}
 
-Your brutal assessment:`
+Roast (1-2 sentences max):`
 
     let roast: string
 
@@ -60,7 +70,8 @@ async function generateRoastWithClaude(prompt: string, apiKey: string): Promise<
     },
     body: JSON.stringify({
       model: 'claude-3-haiku-20240307',
-      max_tokens: 1200,
+      max_tokens: 150,
+      temperature: 1.0,
       messages: [
         {
           role: 'user',
@@ -93,8 +104,8 @@ async function generateRoastWithOpenAI(prompt: string, apiKey: string): Promise<
           content: prompt
         }
       ],
-      max_tokens: 1200,
-      temperature: 0.8
+      max_tokens: 150,
+      temperature: 1.0
     })
   })
 

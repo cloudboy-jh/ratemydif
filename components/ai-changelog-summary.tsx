@@ -192,7 +192,7 @@ export function AIChangelogSummary({
               </CardContent>
             </Card>
           ) : summary ? (
-            <Card className="border-blue-200 dark:border-blue-800">
+            <Card className="bg-zinc-50 dark:bg-zinc-900 border-blue-200 dark:border-blue-800">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -252,7 +252,7 @@ export function AIChangelogSummary({
               </CardContent>
             </Card>
           ) : roast ? (
-            <Card className="border-red-200 dark:border-red-800">
+            <Card className="bg-zinc-50 dark:bg-zinc-900 border-red-200 dark:border-red-800">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -285,7 +285,7 @@ export function AIChangelogSummary({
               </CardContent>
             </Card>
           ) : (
-            <Card className="border-red-200 dark:border-red-800">
+            <Card className="bg-zinc-50 dark:bg-zinc-900 border-red-200 dark:border-red-800">
               <CardContent className="pt-6">
                 <div className="text-center">
                   <Button 
@@ -307,7 +307,7 @@ export function AIChangelogSummary({
 
       {/* Raw commit display */}
       {currentView === 'commits' && commitHistory && (
-        <Card>
+        <Card className="bg-zinc-50 dark:bg-zinc-900 border-green-200 dark:border-green-800">
           <CardHeader>
             <div className="flex items-center gap-2">
               <Code2 className="w-5 h-5 text-green-600 dark:text-green-400" />

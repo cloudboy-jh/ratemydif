@@ -1,8 +1,9 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Github } from "lucide-react"
+import { Github, Angry } from "lucide-react"
 import { ChangelogItemDialog } from "@/components/changelog-item-dialog"
+import { CommitRoastDialog } from "@/components/commit-roast-dialog"
 
 type ChangelogEntry = {
   title: string
@@ -13,9 +14,10 @@ type ChangelogEntry = {
 
 interface ChangelogListProps {
   entries: ChangelogEntry[]
+  showRoastButtons?: boolean
 }
 
-export function ChangelogList({ entries }: ChangelogListProps) {
+export function ChangelogList({ entries, showRoastButtons = false }: ChangelogListProps) {
   return (
     <main className="relative h-[600px] sm:h-[800px] overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-400 dark:scrollbar-thumb-zinc-600 scrollbar-track-zinc-200 dark:scrollbar-track-zinc-800">
       {/* Timeline line */}
@@ -39,8 +41,22 @@ export function ChangelogList({ entries }: ChangelogListProps) {
                       {entry.date}
                     </time>
                   </div>
-                  {entry.repoLink && (
-                    <div className="flex justify-end">
+                  <div className="flex justify-end gap-2">
+                    {showRoastButtons && (
+                      <CommitRoastDialog entry={entry}>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="border-red-300 dark:border-red-600 text-red-700 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 bg-transparent min-h-[44px] whitespace-nowrap"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Angry className="w-4 h-4 mr-1 sm:mr-2" />
+                          <span className="hidden sm:inline">Roast This</span>
+                          <span className="sm:hidden">Roast</span>
+                        </Button>
+                      </CommitRoastDialog>
+                    )}
+                    {entry.repoLink && (
                       <Button
                         asChild
                         variant="outline"
@@ -54,8 +70,8 @@ export function ChangelogList({ entries }: ChangelogListProps) {
                           <span className="sm:hidden">View</span>
                         </a>
                       </Button>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
                 <pre className="font-mono text-sm text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap break-words overflow-x-auto">
                   {entry.summary}

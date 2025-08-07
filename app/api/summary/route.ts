@@ -22,12 +22,31 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const prompt = `Summarize the following git commit history as a changelog for users. Group similar changes, use clear language, and write in Markdown with emoji or bullet points. Do NOT just repeat the commit messages—write concise, human-friendly points.
+    // Add variation to the prompt and format
+    const summaryStyles = [
+      "Create a brief, clean changelog from this git history. Keep it short and organized. Use simple bullet points with emojis. Focus only on the most important changes.",
+      "Generate a concise development summary from these commits. Use bullet points with relevant emojis. Highlight the key features and fixes.",
+      "Transform this commit history into a readable changelog. Use emojis and bullet points. Focus on user-facing changes and important technical updates.",
+      "Create a developer-friendly summary of these commits. Use bullet points with appropriate emojis. Emphasize the most significant changes and improvements.",
+      "Build a clean, organized changelog from this git history. Use emojis and bullets. Focus on features, fixes, and notable changes."
+    ]
+    
+    const emojiSets = [
+      ["🚀", "🐛", "✨", "🔧", "📝", "🎨", "⚡", "🔒"],
+      ["🌟", "🛠️", "💡", "🔥", "📦", "🎯", "⭐", "🚨"],
+      ["✅", "🎉", "🔨", "💫", "📊", "🎪", "⚙️", "🌈"],
+      ["🚧", "💎", "🎭", "🔮", "📈", "🎨", "⚡", "🌸"]
+    ]
+    
+    const randomStyle = summaryStyles[Math.floor(Math.random() * summaryStyles.length)]
+    const randomEmojis = emojiSets[Math.floor(Math.random() * emojiSets.length)]
+    
+    const prompt = `${randomStyle} Choose from these emojis: ${randomEmojis.join(' ')}
 
 Commit history:
 ${commitHistory}
 
-Changelog:`
+Brief changelog (max 4-5 bullet points):`
 
     let summary: string
 
@@ -59,7 +78,8 @@ async function generateSummaryWithClaude(prompt: string, apiKey: string): Promis
     },
     body: JSON.stringify({
       model: 'claude-3-haiku-20240307',
-      max_tokens: 1000,
+      max_tokens: 500,
+      temperature: 0.8,
       messages: [
         {
           role: 'user',
@@ -92,8 +112,8 @@ async function generateSummaryWithOpenAI(prompt: string, apiKey: string): Promis
           content: prompt
         }
       ],
-      max_tokens: 1000,
-      temperature: 0.7
+      max_tokens: 500,
+      temperature: 0.85
     })
   })
 

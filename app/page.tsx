@@ -7,8 +7,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { ArrowUpDown, Github, RefreshCw, Home, Globe, Lock, ChevronRight, ChevronDown } from "lucide-react"
 import { ChangelogList } from "@/components/changelog-list"
+import { AIChangelogSummary } from "@/components/ai-changelog-summary"
 
 import { Navigation } from "@/components/navigation"
+
+type ViewMode = 'ai' | 'commits' | 'roast'
 
 interface Repository {
   id: number
@@ -43,6 +46,8 @@ export default function ChangelogPage() {
   const [selectedRepo, setSelectedRepo] = useState<SelectedRepository | null>(null)
   const [repositories, setRepositories] = useState<Repository[]>([])
   const [loadingRepos, setLoadingRepos] = useState(false)
+  const [currentView, setCurrentView] = useState<ViewMode>('ai')
+  const [commitHistory, setCommitHistory] = useState<string>("")
 
   useEffect(() => {
     // Check if user is authenticated and has selected a repository
@@ -128,6 +133,12 @@ export default function ChangelogPage() {
       
       const commits = await response.json()
       setChangelogData(commits)
+      
+      // Create commit history string for AI summary (simulating git log output)
+      const commitHistoryString = commits.map((commit: ChangelogEntry) => 
+        `${commit.date.slice(0, 7)} ${commit.title}`
+      ).join('\n')
+      setCommitHistory(commitHistoryString)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
@@ -340,34 +351,36 @@ export default function ChangelogPage() {
               </div>
             </div>
 
-            <div className="flex justify-center items-center gap-4 mb-8 flex-wrap">
+            <div className="flex justify-center items-center gap-2 sm:gap-4 mb-8 flex-wrap px-2">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={fetchGitHubCommits}
                 disabled={isLoading}
-                className="font-mono bg-transparent border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                className="font-mono bg-transparent border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 min-h-[44px] px-3 whitespace-nowrap"
               >
                 {isLoading ? (
-                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  <RefreshCw className="w-4 h-4 mr-1 sm:mr-2 animate-spin" />
                 ) : (
-                  <Github className="w-4 h-4 mr-2" />
+                  <Github className="w-4 h-4 mr-1 sm:mr-2" />
                 )}
-                {isLoading ? "Loading..." : "Refresh Commits"}
+                <span className="hidden sm:inline">{isLoading ? "Loading..." : "Refresh Commits"}</span>
+                <span className="sm:hidden">{isLoading ? "Loading" : "Refresh"}</span>
               </Button>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={sortByDate}
                 disabled={isSorting}
-                className="font-mono bg-transparent border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                className="font-mono bg-transparent border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 min-h-[44px] px-3 whitespace-nowrap"
               >
                 {isSorting ? (
-                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  <RefreshCw className="w-4 h-4 mr-1 sm:mr-2 animate-spin" />
                 ) : (
-                  <ArrowUpDown className="w-4 h-4 mr-2" />
+                  <ArrowUpDown className="w-4 h-4 mr-1 sm:mr-2" />
                 )}
-                {isSorting ? "Sorting..." : (sortOrder === "newest" ? "Oldest First" : "Newest First")}
+                <span className="hidden sm:inline">{isSorting ? "Sorting..." : (sortOrder === "newest" ? "Oldest First" : "Newest First")}</span>
+                <span className="sm:hidden">{isSorting ? "Sort" : "Sort"}</span>
               </Button>
             </div>
 
@@ -389,7 +402,14 @@ export default function ChangelogPage() {
                 <p className="text-zinc-600 dark:text-zinc-400 font-mono">No commits found in this repository.</p>
               </div>
             ) : (
-              <ChangelogList entries={changelogData} />
+              <div className="space-y-6">
+                <AIChangelogSummary 
+                  commitHistory={commitHistory}
+                  onToggleView={setCurrentView}
+                  showToggle={true}
+                />
+                {currentView === 'commits' && <ChangelogList entries={changelogData} />}
+              </div>
             )}
           </div>
         )}

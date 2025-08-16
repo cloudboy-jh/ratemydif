@@ -1,66 +1,229 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { RoastRequest, RoastResponse, RatingLevel } from '@/types/roast'
+
+export const SYSTEM_PROMPT = `You are a developer roast comic. Humor must be grounded in concrete technical details from the diff and lightly flavored by the author's GitHub profile. Respect RATING_LEVEL for spice. Never include slurs or hateful content toward protected classes. Keep it clever and dev-aware. Output EXACTLY two lines.`;
+
+export const USER_PROMPT = (ratingLevel: string, patch: string, profileJson: unknown) => `
+RATING_LEVEL: ${ratingLevel}
+
+COMMIT_PATCH (verbatim):
+${patch}
+
+AUTHOR_PROFILE_JSON (verbatim):
+${JSON.stringify(profileJson)}
+
+TASK:
+Analyze the code changes and infer intent/impact. Use profile details for color. OUTPUT EXACTLY TWO LINES, no intro text:
+
+Line 1: <= 280 chars, tweetable summary roast tied to a SPECIFIC change.
+
+Line 2: Longer roast that cites at least one concrete technical detail from the diff (file/function/var/logic) + one taste-appropriate jab tied to the profile.`;
+
+// Simple in-memory cache for 15 minutes
+const cache = new Map<string, { data: RoastResponse; timestamp: number }>();
+const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes
+
+function getCacheKey(commitUrl: string, ratingLevel: string, model?: string): string {
+  const sha = commitUrl.split('/commit/')[1]?.split('?')[0] || commitUrl;
+  return `${sha}-${ratingLevel}-${model || 'default'}`;
+}
 
 export async function POST(request: NextRequest) {
   try {
-    const { commitHistory } = await request.json()
+    const body: RoastRequest = await request.json();
+    const { commitUrl, username, ratingLevel, model } = body;
 
-    if (!commitHistory || typeof commitHistory !== 'string') {
+    // Validation
+    if (!commitUrl || !commitUrl.includes('/commit/')) {
       return NextResponse.json(
-        { error: 'Invalid commit history provided' },
+        { error: 'Invalid commit URL. Must include /commit/' },
         { status: 400 }
-      )
+      );
     }
 
-    // Check for API keys - prioritize Claude, fallback to OpenAI
-    const claudeApiKey = process.env.ANTHROPIC_API_KEY
-    const openaiApiKey = process.env.OPENAI_API_KEY
+    if (!username || typeof username !== 'string') {
+      return NextResponse.json(
+        { error: 'Username is required' },
+        { status: 400 }
+      );
+    }
+
+    if (!['G', 'PG', 'R', 'Unhinged'].includes(ratingLevel)) {
+      return NextResponse.json(
+        { error: 'Invalid rating level. Must be G, PG, R, or Unhinged' },
+        { status: 400 }
+      );
+    }
+
+    // Check cache first
+    const cacheKey = getCacheKey(commitUrl, ratingLevel, model);
+    const cached = cache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+      return NextResponse.json(cached.data);
+    }
+
+    // Fetch patch and profile in parallel
+    const [patchResponse, profileResponse] = await Promise.all([
+      fetch(commitUrl + '.patch', {
+        headers: { 'Accept': 'text/plain' }
+      }),
+      fetch(`https://api.github.com/users/${username}`, {
+        headers: { 'Accept': 'application/vnd.github+json' }
+      })
+    ]);
+
+    if (!patchResponse.ok) {
+      return NextResponse.json(
+        { error: `Failed to fetch commit patch: ${patchResponse.statusText}` },
+        { status: 400 }
+      );
+    }
+
+    if (!profileResponse.ok) {
+      return NextResponse.json(
+        { error: `Failed to fetch GitHub profile: ${profileResponse.statusText}` },
+        { status: 400 }
+      );
+    }
+
+    const patch = await patchResponse.text();
+    const profileJson = await profileResponse.json();
+
+    // Truncate large patches (keep head and tail, mark truncation)
+    let processedPatch = patch;
+    if (patch.length > 8000) {
+      const lines = patch.split('\n');
+      const headLines = lines.slice(0, 100);
+      const tailLines = lines.slice(-100);
+      processedPatch = [
+        ...headLines,
+        '... [TRUNCATED FOR LENGTH] ...',
+        ...tailLines
+      ].join('\n');
+    }
+
+    // Check for API keys
+    const claudeApiKey = process.env.ANTHROPIC_API_KEY;
+    const openaiApiKey = process.env.OPENAI_API_KEY;
 
     if (!claudeApiKey && !openaiApiKey) {
       return NextResponse.json(
         { error: 'No AI API key configured' },
         { status: 500 }
-      )
+      );
     }
 
-    // Add variation to the prompt
-    const roastStyles = [
-      "You're a brutally honest code reviewer. Roast this commit in 1-2 savage sentences. Be blunt, use profanity if needed, and call out terrible commit habits. No fluff.",
-      "You're a pissed-off senior dev. Give a harsh but hilarious 1-2 sentence roast of this commit. Swear if you want, be direct, avoid saying 'ah' constantly.",
-      "You're a no-bullshit code reviewer. Deliver a short, cutting roast in 1-2 sentences. Be brutal, funny, and don't hold back on language.",
-      "You're an angry git expert. Give a savage 1-2 sentence takedown of this commit. Use strong language, be merciless, skip the 'ah' filler words.",
-      "You're a fed-up developer. Roast this commit in 1-2 brutal sentences. Swear freely, be savage, and avoid repetitive phrases like 'ah' or 'oh'."
-    ]
+    const startTime = performance.now();
     
-    const randomStyle = roastStyles[Math.floor(Math.random() * roastStyles.length)]
-    
-    const prompt = `${randomStyle}
+    // Generate roast
+    const roastResult = await generateRoast(
+      ratingLevel as RatingLevel,
+      processedPatch,
+      profileJson,
+      model,
+      claudeApiKey,
+      openaiApiKey
+    );
 
-Commit:
-${commitHistory}
+    const durationMs = Math.round(performance.now() - startTime);
 
-Roast (1-2 sentences max):`
+    const response: RoastResponse = {
+      tweet: roastResult.tweet,
+      deepRoast: roastResult.deepRoast,
+      model: roastResult.model,
+      durationMs
+    };
 
-    let roast: string
+    // Cache the result
+    cache.set(cacheKey, { data: response, timestamp: Date.now() });
 
-    if (claudeApiKey) {
-      // Use Claude API
-      roast = await generateRoastWithClaude(prompt, claudeApiKey)
-    } else {
-      // Fallback to OpenAI
-      roast = await generateRoastWithOpenAI(prompt, openaiApiKey!)
+    // Clean up old cache entries occasionally
+    if (Math.random() < 0.1) {
+      const now = Date.now();
+      for (const [key, value] of cache.entries()) {
+        if (now - value.timestamp > CACHE_DURATION) {
+          cache.delete(key);
+        }
+      }
     }
 
-    return NextResponse.json({ roast })
+    return NextResponse.json(response);
   } catch (error) {
-    console.error('Error generating roast:', error)
+    console.error('Error generating roast:', error);
     return NextResponse.json(
       { error: 'Failed to generate roast' },
       { status: 500 }
-    )
+    );
   }
 }
 
-async function generateRoastWithClaude(prompt: string, apiKey: string): Promise<string> {
+async function generateRoast(
+  ratingLevel: RatingLevel,
+  patch: string,
+  profileJson: unknown,
+  preferredModel?: string,
+  claudeApiKey?: string,
+  openaiApiKey?: string
+): Promise<{ tweet: string; deepRoast: string; model: string }> {
+  const prompt = USER_PROMPT(ratingLevel, patch, profileJson);
+
+  // Determine which model to use
+  let useModel = preferredModel;
+  if (!useModel) {
+    useModel = claudeApiKey ? 'claude-3-haiku-20240307' : 'gpt-3.5-turbo';
+  }
+
+  let result: string;
+
+  try {
+    if (useModel.startsWith('claude') && claudeApiKey) {
+      result = await generateRoastWithClaude(prompt, claudeApiKey, useModel);
+    } else if ((useModel.startsWith('gpt') || useModel.startsWith('o')) && openaiApiKey) {
+      result = await generateRoastWithOpenAI(prompt, openaiApiKey, useModel);
+    } else {
+      // Fallback
+      if (claudeApiKey) {
+        result = await generateRoastWithClaude(prompt, claudeApiKey, 'claude-3-haiku-20240307');
+        useModel = 'claude-3-haiku-20240307';
+      } else if (openaiApiKey) {
+        result = await generateRoastWithOpenAI(prompt, openaiApiKey, 'gpt-3.5-turbo');
+        useModel = 'gpt-3.5-turbo';
+      } else {
+        throw new Error('No API key available');
+      }
+    }
+  } catch (error) {
+    // Fallback to the other provider
+    if (useModel.startsWith('claude') && openaiApiKey) {
+      result = await generateRoastWithOpenAI(prompt, openaiApiKey, 'gpt-3.5-turbo');
+      useModel = 'gpt-3.5-turbo';
+    } else if (claudeApiKey) {
+      result = await generateRoastWithClaude(prompt, claudeApiKey, 'claude-3-haiku-20240307');
+      useModel = 'claude-3-haiku-20240307';
+    } else {
+      throw error;
+    }
+  }
+
+  // Parse the two lines
+  const lines = result.trim().split('\n').filter(line => line.trim());
+  
+  let tweet = lines[0] || 'Your code speaks for itself... unfortunately.';
+  let deepRoast = lines[1] || 'A deeper analysis reveals... well, let\'s just say there\'s room for improvement.';
+
+  // Ensure tweet is <= 280 characters
+  if (tweet.length > 280) {
+    tweet = tweet.substring(0, 277) + '...';
+  }
+
+  return { tweet, deepRoast, model: useModel };
+}
+
+async function generateRoastWithClaude(
+  prompt: string,
+  apiKey: string,
+  model: string = 'claude-3-haiku-20240307'
+): Promise<string> {
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -69,9 +232,10 @@ async function generateRoastWithClaude(prompt: string, apiKey: string): Promise<
       'anthropic-version': '2023-06-01',
     },
     body: JSON.stringify({
-      model: 'claude-3-haiku-20240307',
-      max_tokens: 150,
-      temperature: 1.0,
+      model,
+      max_tokens: 300,
+      temperature: 0.9,
+      system: SYSTEM_PROMPT,
       messages: [
         {
           role: 'user',
@@ -89,7 +253,11 @@ async function generateRoastWithClaude(prompt: string, apiKey: string): Promise<
   return data.content[0].text
 }
 
-async function generateRoastWithOpenAI(prompt: string, apiKey: string): Promise<string> {
+async function generateRoastWithOpenAI(
+  prompt: string,
+  apiKey: string,
+  model: string = 'gpt-3.5-turbo'
+): Promise<string> {
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -97,15 +265,19 @@ async function generateRoastWithOpenAI(prompt: string, apiKey: string): Promise<
       'Authorization': `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: 'gpt-3.5-turbo',
+      model,
       messages: [
+        {
+          role: 'system',
+          content: SYSTEM_PROMPT
+        },
         {
           role: 'user',
           content: prompt
         }
       ],
-      max_tokens: 150,
-      temperature: 1.0
+      max_tokens: 300,
+      temperature: 0.9
     })
   })
 

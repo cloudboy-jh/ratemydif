@@ -3,8 +3,14 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Loader2, RotateCcw, Code2, Angry } from "lucide-react"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
+import { Loader2, RotateCcw, Code2, Angry, Zap, ChevronDown, ChevronUp } from "lucide-react"
 import { ShareRoastButton } from "@/components/share-roast-button"
+import { CopyButton } from "@/components/copy-button"
+import { RatingLevel, RoastRequest, RoastResponse } from "@/types/roast"
 
 type ViewMode = 'commits' | 'roast'
 
@@ -15,73 +21,94 @@ interface AIChangelogSummaryProps {
   repoName?: string
 }
 
+const AVAILABLE_MODELS = [
+  'gpt-4o',
+  'gpt-4o-mini', 
+  'o1-preview',
+  'o1-mini',
+  'claude-3.5-sonnet',
+  'claude-3.5-haiku',
+  'claude-3-opus'
+]
+
+const RATING_DESCRIPTIONS = {
+  G: 'Family-friendly wit',
+  PG: 'Cheeky but clean',
+  R: 'Strong language allowed',
+  Unhinged: 'No holds barred'
+}
+
 export function AIChangelogSummary({ 
   commitHistory, 
   onToggleView, 
   showToggle = true,
   repoName
 }: AIChangelogSummaryProps) {
-  const [roast, setRoast] = useState<string>("")
-  const [roastLoading, setRoastLoading] = useState(false)
-  const [error, setError] = useState<string>("")
   const [currentView, setCurrentView] = useState<ViewMode>('roast')
-
-  // Auto-generate roast on component mount
-  useEffect(() => {
-    if (commitHistory.trim() && !roast) {
-      generateRoast()
-    }
-  }, [commitHistory])
-
+  const [commitUrl, setCommitUrl] = useState('')
+  const [username, setUsername] = useState('')
+  const [ratingLevel, setRatingLevel] = useState<RatingLevel>('PG')
+  const [selectedModel, setSelectedModel] = useState<string>('')
+  const [roastData, setRoastData] = useState<RoastResponse | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string>('')
+  const [isRoasterOpen, setIsRoasterOpen] = useState(false)
 
   const generateRoast = async () => {
-    if (!commitHistory.trim()) {
-      setError("No commit history available to roast")
+    if (!commitUrl.trim() || !username.trim()) {
+      setError('Please provide both commit URL and username')
       return
     }
 
-    setRoastLoading(true)
-    setError("")
+    if (!commitUrl.includes('/commit/')) {
+      setError('Please provide a valid GitHub commit URL')
+      return
+    }
+
+    setIsLoading(true)
+    setError('')
+    setRoastData(null)
 
     try {
-      const response = await fetch("/api/roast", {
-        method: "POST",
+      const requestBody: RoastRequest = {
+        commitUrl: commitUrl.trim(),
+        username: username.trim(),
+        ratingLevel,
+        ...(selectedModel && selectedModel !== 'auto' && { model: selectedModel })
+      }
+
+      const response = await fetch('/api/roast', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ commitHistory }),
+        body: JSON.stringify(requestBody),
       })
 
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.error || "Failed to generate roast")
+        throw new Error(errorData.error || 'Failed to generate roast')
       }
 
-      const data = await response.json()
-      setRoast(data.roast)
+      const data: RoastResponse = await response.json()
+      setRoastData(data)
       setCurrentView('roast')
       onToggleView?.('roast')
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred")
+      setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
-      setRoastLoading(false)
+      setIsLoading(false)
     }
   }
 
   const handleViewChange = (mode: ViewMode) => {
-    if (mode === 'roast' && !roast) {
-      generateRoast()
-      return
-    }
     setCurrentView(mode)
     onToggleView?.(mode)
   }
 
-  const regenerateContent = () => {
-    if (currentView === 'roast') {
-      setRoast("")
-      generateRoast()
-    }
+  const resetForm = () => {
+    setRoastData(null)
+    setError('')
   }
 
   return (
@@ -99,10 +126,9 @@ export function AIChangelogSummary({
                   ? 'bg-white dark:bg-zinc-700 shadow-sm text-red-600 dark:text-red-400'
                   : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100'
               }`}
-              disabled={roastLoading}
             >
               <Angry className="w-4 h-4 mr-1" />
-              {roastLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : "Roast"}
+              Roast
             </Button>
             <Button
               onClick={() => handleViewChange('commits')}
@@ -137,76 +163,177 @@ export function AIChangelogSummary({
       {/* Roast view */}
       {currentView === 'roast' && (
         <>
-          {roastLoading ? (
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-center gap-3 text-zinc-600 dark:text-zinc-400">
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>Preparing brutal assessment...</span>
-                </div>
-              </CardContent>
-            </Card>
-          ) : roast ? (
-            <Card id="main-roast-card" className="bg-zinc-50 dark:bg-zinc-900 border-red-200 dark:border-red-800">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Angry className="w-5 h-5 text-red-600 dark:text-red-400" />
-                    <CardTitle className="text-red-700 dark:text-red-300">
-                      Git Roast - Brutally Honest Assessment
-                    </CardTitle>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <ShareRoastButton
-                      roast={{
-                        content: roast,
-                        repoName: repoName,
-                        type: 'main'
-                      }}
-                      screenshotElementId="main-roast-card"
-                      className="no-screenshot"
-                    />
-                    <Button 
-                      onClick={regenerateContent} 
-                      variant="outline"
-                      size="sm"
-                      className="border-red-300 dark:border-red-600 no-screenshot"
-                    >
-                      <RotateCcw className="w-4 h-4 mr-2" />
-                      More Pain
-                    </Button>
+          {/* Collapsible Roaster Card - Commit List Style */}
+          <div className="relative">
+            {/* Timeline dot */}
+            <div className="absolute left-1/2 top-6 w-3 h-3 bg-red-500 rounded-full transform -translate-x-1/2 hidden sm:block animate-pulse"></div>
+
+            <div className={`bg-zinc-50 dark:bg-zinc-900 shadow-sm ring-1 ring-zinc-200 dark:ring-zinc-800 relative z-10 transition-colors touch-manipulation ${
+              isRoasterOpen 
+                ? 'rounded-t-lg' 
+                : 'rounded-lg cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800'
+            }`}>
+              <div 
+                className="p-4 sm:p-6 cursor-pointer"
+                onClick={() => setIsRoasterOpen(!isRoasterOpen)}
+              >
+                <div className="flex flex-col gap-4 mb-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 sm:gap-3 mb-2">
+                      <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse flex-shrink-0"></div>
+                      <h3 className="text-lg sm:text-xl font-bold font-mono text-zinc-900 dark:text-zinc-100 leading-tight">
+                        Git Commit Roaster
+                      </h3>
+                      {isRoasterOpen ? (
+                        <ChevronUp className="w-5 h-5 text-zinc-600 dark:text-zinc-400 ml-auto" />
+                      ) : (
+                        <ChevronDown className="w-5 h-5 text-zinc-600 dark:text-zinc-400 ml-auto" />
+                      )}
+                    </div>
+                    <time className="text-xs sm:text-sm font-mono uppercase tracking-wider text-zinc-500 dark:text-zinc-400 block">
+                      Get brutally honest AI feedback about specific commits
+                    </time>
                   </div>
                 </div>
-                <CardDescription className="text-red-600 dark:text-red-400">
-                  ⚠️ Warning: Extremely judgmental AI feedback ahead
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div 
-                  className="prose prose-sm dark:prose-invert max-w-none text-red-800 dark:text-red-200"
-                  dangerouslySetInnerHTML={{ 
-                    __html: roast.replace(/\n/g, '<br>') 
-                  }}
-                />
-              </CardContent>
-            </Card>
-          ) : (
-            <Card className="bg-zinc-50 dark:bg-zinc-900 border-red-200 dark:border-red-800">
-              <CardContent className="pt-6">
-                <div className="text-center">
-                  <Button 
-                    onClick={() => generateRoast()} 
-                    className="bg-red-600 hover:bg-red-700 text-white"
+              </div>
+
+              {/* Collapsible Form Content */}
+              {isRoasterOpen && (
+                <div className="border-t border-zinc-200 dark:border-zinc-800 p-4 sm:p-6 space-y-4 rounded-b-lg bg-zinc-50 dark:bg-zinc-900">
+                <div className="space-y-2">
+                  <Label htmlFor="commitUrl" className="font-mono text-sm">GitHub Commit URL</Label>
+                  <Input
+                    id="commitUrl"
+                    placeholder="https://github.com/user/repo/commit/abc123..."
+                    value={commitUrl}
+                    onChange={(e) => setCommitUrl(e.target.value)}
+                    className="font-mono text-sm"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="username" className="font-mono text-sm">GitHub Username</Label>
+                  <Input
+                    id="username"
+                    placeholder="github-username"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    className="font-mono text-sm"
+                  />
+                </div>
+
+                <div className="space-y-3">
+                  <Label className="font-mono text-sm">Rating Level</Label>
+                  <RadioGroup
+                    value={ratingLevel}
+                    onValueChange={(value) => setRatingLevel(value as RatingLevel)}
+                    className="grid grid-cols-2 gap-4"
                   >
-                    <Angry className="w-4 h-4 mr-2" />
-                    Roast My Git Commits
+                    {Object.entries(RATING_DESCRIPTIONS).map(([level, description]) => (
+                      <div key={level} className="flex items-center space-x-2">
+                        <RadioGroupItem value={level} id={level} />
+                        <Label htmlFor={level} className="text-sm font-mono">
+                          <span className="font-semibold text-zinc-900 dark:text-zinc-100">{level}</span>
+                          <span className="text-zinc-600 dark:text-zinc-400 ml-1 font-sans">
+                            - {description}
+                          </span>
+                        </Label>
+                      </div>
+                    ))}
+                  </RadioGroup>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="model" className="font-mono text-sm">AI Model (Optional)</Label>
+                  <Select value={selectedModel} onValueChange={setSelectedModel}>
+                    <SelectTrigger className="font-mono text-sm">
+                      <SelectValue placeholder="Auto-select model" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="auto" className="font-mono">Auto-select</SelectItem>
+                      {AVAILABLE_MODELS.map((model) => (
+                        <SelectItem key={model} value={model} className="font-mono">
+                          {model}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button
+                    onClick={generateRoast}
+                    disabled={isLoading || !commitUrl.trim() || !username.trim()}
+                    className="bg-red-600 hover:bg-red-700 text-white font-mono"
+                  >
+                    {isLoading ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Angry className="w-4 h-4 mr-2" />
+                    )}
+                    {isLoading ? 'Roasting...' : 'Generate Roast'}
                   </Button>
-                  <p className="text-sm text-red-600 dark:text-red-400 mt-2">
-                    Prepare for brutal honesty about your coding habits
+                  {roastData && (
+                    <Button onClick={resetForm} variant="outline" className="font-mono">
+                      <RotateCcw className="w-4 h-4 mr-2" />
+                      New Roast
+                    </Button>
+                  )}
+                </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Results */}
+          {roastData && (
+            <div className="space-y-4">
+              {/* Tweet line */}
+              <Card id="tweet-roast-card" className="bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-zinc-900 dark:text-zinc-100 text-sm font-mono">
+                      🐦 Tweetable Roast
+                    </CardTitle>
+                    <CopyButton text={roastData.tweet} className="no-screenshot font-mono" size="sm" />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="font-mono text-zinc-700 dark:text-zinc-300 leading-relaxed text-sm">
+                    {roastData.tweet}
+                  </p>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-2 font-mono">
+                    {roastData.tweet.length}/280 characters
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* Deep roast */}
+              <Card id="deep-roast-card" className="bg-zinc-50 dark:bg-zinc-900 border-red-200 dark:border-red-800">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-red-700 dark:text-red-300 text-sm font-mono">
+                      🔥 Deep Technical Roast
+                    </CardTitle>
+                    <CopyButton text={roastData.deepRoast} className="no-screenshot font-mono" size="sm" />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-red-800 dark:text-red-200 leading-relaxed text-sm">
+                    {roastData.deepRoast}
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* Timing footer */}
+              {selectedModel && selectedModel !== 'auto' && (
+                <div className="text-center">
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 font-mono">
+                    ({roastData.model} • {(roastData.durationMs / 1000).toFixed(2)}s)
                   </p>
                 </div>
-              </CardContent>
-            </Card>
+              )}
+            </div>
           )}
         </>
       )}

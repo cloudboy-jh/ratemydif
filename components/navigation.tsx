@@ -57,7 +57,7 @@ export function Navigation({
           {/* Far left - Logo and Home */}
           <div className="flex items-center space-x-2 sm:space-x-3">
             <img 
-              src={isDarkMode ? "/2.svg" : "/1.svg"} 
+              src="/ratemydiflogo.svg" 
               alt="Logo" 
               className="h-8 w-auto sm:h-12" 
             />

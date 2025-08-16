@@ -163,7 +163,7 @@ export default function ChangelogPage() {
           <div className="flex items-center justify-center min-h-[60vh]">
             <div className="max-w-md mx-auto text-center">
               <div className="mb-8">
-                <img src="/1.svg" alt="Logo" className="h-28 w-auto mx-auto" />
+                <img src="/ratemydiflogo.svg" alt="Logo" className="h-28 w-auto mx-auto" />
                 <div className="mt-4 flex justify-center">
                   <ChevronDown className="h-8 w-8 text-orange-500" />
                 </div>

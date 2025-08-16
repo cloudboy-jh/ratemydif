@@ -5,10 +5,10 @@ import './globals.css'
 import { AuthProvider } from '@/components/session-provider'
 
 export const metadata: Metadata = {
-  title: 'RateMyGit',
-  description: 'Get brutally honest AI feedback about your Git commit quality',
+  title: 'RateMyDiff',
+  description: 'Get brutally honest AI feedback about your code diffs',
   icons: {
-    icon: '/1.svg',
+    icon: '/ratemydiflogo.svg',
   },
   viewport: {
     width: 'device-width',

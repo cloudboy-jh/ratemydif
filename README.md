@@ -1,33 +1,10 @@
-# Vertical changelog component
+# RateMyGit
 
-*Automatically synced with your [v0.dev](https://v0.dev) deployments*
-
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/jack-s-projects-79534cb2/v0-vertical-changelog-component)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.dev-black?style=for-the-badge)](https://v0.dev/chat/projects/7CslDAkLU43)
+A Next.js application for AI-powered Git commit quality assessment with GitHub integration and brutal honesty.
 
 ## Overview
 
-This repository will stay in sync with your deployed chats on [v0.dev](https://v0.dev).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.dev](https://v0.dev).
-
-## Deployment
-
-Your project is live at:
-
-**[https://vercel.com/jack-s-projects-79534cb2/v0-vertical-changelog-component](https://vercel.com/jack-s-projects-79534cb2/v0-vertical-changelog-component)**
-
-## Build your app
-
-Continue building your app on:
-
-**[https://v0.dev/chat/projects/7CslDAkLU43](https://v0.dev/chat/projects/7CslDAkLU43)**
-
-## How It Works
-
-1. Create and modify your project using [v0.dev](https://v0.dev)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
+RateMyGit provides brutally honest AI feedback about your Git commits. Connect your GitHub account, select a repository, and get roasted by AI about your coding habits and commit quality.
 
 ## GitHub OAuth Integration Setup
 
@@ -38,6 +15,10 @@ This changelog app now includes GitHub OAuth authentication and repository selec
 Create a `.env.local` file in the root directory with the following variables:
 
 ```env
+# AI API Keys (at least one required)
+ANTHROPIC_API_KEY=your_claude_api_key_here
+OPENAI_API_KEY=your_openai_api_key_here
+
 # GitHub OAuth App Configuration
 # Create a GitHub OAuth App at: https://github.com/settings/developers
 GITHUB_CLIENT_ID=your_github_oauth_client_id
@@ -46,17 +27,28 @@ GITHUB_CLIENT_SECRET=your_github_oauth_client_secret
 # NextAuth Configuration
 NEXTAUTH_URL=http://localhost:3000
 NEXTAUTH_SECRET=your_nextauth_secret_key_here
-
-# Legacy GitHub Token (optional - for direct API access)
-GITHUB_TOKEN=your_github_personal_access_token_here
 ```
+
+### API Keys Setup
+
+#### Anthropic Claude API (Recommended)
+1. Go to [Anthropic Console](https://console.anthropic.com/)
+2. Create an account and get your API key
+3. Add it to `.env.local` as `ANTHROPIC_API_KEY`
+
+#### OpenAI API (Fallback)
+1. Go to [OpenAI Platform](https://platform.openai.com/)
+2. Create an account and get your API key
+3. Add it to `.env.local` as `OPENAI_API_KEY`
+
+**Note**: You need at least one AI API key. The app will use Claude if available, otherwise OpenAI.
 
 ### GitHub OAuth App Setup
 
 1. Go to [GitHub Settings > Developer settings > OAuth Apps](https://github.com/settings/developers)
 2. Click "New OAuth App"
 3. Fill in the application details:
-   - **Application name**: Changelog Generator
+   - **Application name**: RateMyGit
    - **Homepage URL**: `http://localhost:3000`
    - **Authorization callback URL**: `http://localhost:3000/api/auth/callback/github`
 4. Click "Register application"

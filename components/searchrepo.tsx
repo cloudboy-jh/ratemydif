@@ -134,7 +134,7 @@ export function SearchRepo() {
           <div className="max-w-2xl mx-auto text-center space-y-8">
             {/* Logo */}
             <div className="mb-8">
-              <img src="/1.svg" alt="Logo" className="h-28 w-auto mx-auto" />
+              <img src="/ratemydiflogo.svg" alt="Logo" className="h-28 w-auto mx-auto" />
               <div className="mt-4 flex justify-center">
                 <ChevronDown className="h-8 w-8 text-orange-500" />
               </div>

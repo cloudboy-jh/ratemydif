@@ -158,26 +158,26 @@ export default function ChangelogPage() {
         isSorting={isSorting}
         sortOrder={sortOrder}
       />
-      <div className="container mx-auto max-w-4xl px-4 py-12">
+      <div className="container mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
         {!session ? (
-          <div className="flex items-center justify-center min-h-[60vh]">
-            <div className="max-w-md mx-auto text-center">
-              <div className="mb-8">
-                <img src="/ratemydiflogo.svg" alt="Logo" className="h-28 w-auto mx-auto" />
-                <div className="mt-4 flex justify-center">
-                  <ChevronDown className="h-8 w-8 text-orange-500" />
+          <div className="flex items-center justify-center min-h-[60vh] px-4">
+            <div className="max-w-sm sm:max-w-md mx-auto text-center w-full">
+              <div className="mb-6 sm:mb-8">
+                <img src="/ratemydiflogo.svg" alt="Logo" className="h-20 sm:h-28 w-auto mx-auto" />
+                <div className="mt-3 sm:mt-4 flex justify-center">
+                  <ChevronDown className="h-6 sm:h-8 w-6 sm:w-8 text-orange-500" />
                 </div>
               </div>
-              <Card className="bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800">
-                <CardHeader className="text-center">
-                  <CardTitle className="font-mono text-zinc-900 dark:text-zinc-100">
+              <Card className="bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 w-full">
+                <CardHeader className="text-center pb-4 sm:pb-6">
+                  <CardTitle className="font-mono text-lg sm:text-xl text-zinc-900 dark:text-zinc-100">
                     Get Started
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="pt-0">
                   <Button
                     onClick={() => signIn('github')}
-                    className="w-full font-mono bg-zinc-900 dark:bg-zinc-100 text-zinc-100 dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200"
+                    className="w-full font-mono bg-zinc-900 dark:bg-zinc-100 text-zinc-100 dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200 min-h-[48px] text-sm sm:text-base"
                   >
                     <Github className="w-4 h-4 mr-2" />
                     Connect with GitHub
@@ -194,8 +194,8 @@ export default function ChangelogPage() {
         ) : (
           <div className="space-y-8">
             {error && (
-              <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                <p className="text-red-700 dark:text-red-300 font-mono text-sm">
+              <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg mx-2 sm:mx-0">
+                <p className="text-red-700 dark:text-red-300 font-mono text-xs sm:text-sm break-words">
                   Error: {error}
                 </p>
               </div>
@@ -211,7 +211,7 @@ export default function ChangelogPage() {
                 <p className="text-zinc-600 dark:text-zinc-400 font-mono">No commits found in this repository.</p>
               </div>
             ) : (
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 <AIChangelogSummary 
                   commitHistory={commitHistory}
                   onToggleView={setCurrentView}

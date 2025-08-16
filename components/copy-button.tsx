@@ -30,17 +30,19 @@ export function CopyButton({ text, className, size = "sm", variant = "outline" }
       onClick={handleCopy}
       variant={variant}
       size={size}
-      className={cn("min-w-[80px]", className)}
+      className={cn("min-w-[80px] min-h-[40px] sm:min-h-[36px] text-xs sm:text-sm", className)}
     >
       {copied ? (
         <>
-          <Check className="w-4 h-4 mr-1" />
-          Copied
+          <Check className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+          <span className="hidden xs:inline">Copied</span>
+          <span className="xs:hidden">✓</span>
         </>
       ) : (
         <>
-          <Copy className="w-4 h-4 mr-1" />
-          Copy
+          <Copy className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+          <span className="hidden xs:inline">Copy</span>
+          <span className="xs:hidden">📋</span>
         </>
       )}
     </Button>

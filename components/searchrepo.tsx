@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { ChevronDown, Github, Globe, Lock, Search, RefreshCw, ChevronRight, ArrowRight } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { RotatingText } from "@/components/animate-ui/text/rotating"
 
 interface Repository {
   id: number
@@ -330,17 +331,39 @@ export function SearchRepo() {
                   <CardContent className="p-6 space-y-4">
                     <div className="space-y-2">
                       <div className="flex gap-2">
-                        <Input
-                          placeholder="https://github.com/owner/repo or owner/repo"
-                          value={searchInput}
-                          onChange={(e) => setSearchInput(e.target.value)}
-                          onKeyDown={(e) => e.key === 'Enter' && searchRepository()}
-                          className="font-mono"
-                        />
+                        <div className="relative flex-1">
+                          <Input
+                            placeholder=""
+                            value={searchInput}
+                            onChange={(e) => setSearchInput(e.target.value)}
+                            onPaste={(e) => {
+                              e.preventDefault()
+                              const pastedText = e.clipboardData.getData('text')
+                              setSearchInput(pastedText)
+                            }}
+                            onKeyDown={(e) => e.key === 'Enter' && searchRepository()}
+                            className="font-mono rounded-xl"
+                          />
+                          {!searchInput && (
+                            <div className="absolute inset-0 flex items-center px-3 pointer-events-none">
+                              <RotatingText
+                                text={[
+                                  'https://github.com/owner/repo',
+                                  'owner/repo',
+                                  'https://github.com/facebook/react',
+                                  'https://github.com/vercel/next.js',
+                                  'microsoft/vscode'
+                                ]}
+                                duration={2500}
+                                className="font-mono text-zinc-500 dark:text-zinc-500"
+                              />
+                            </div>
+                          )}
+                        </div>
                         <Button 
                           onClick={searchRepository}
                           disabled={searchLoading || !searchInput.trim()}
-                          className="font-mono bg-zinc-900 dark:bg-zinc-100 text-zinc-100 dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200"
+                          className="font-mono bg-zinc-900 dark:bg-zinc-100 text-zinc-100 dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200 rounded-xl"
                         >
                           {searchLoading ? (
                             <RefreshCw className="w-4 h-4 animate-spin" />

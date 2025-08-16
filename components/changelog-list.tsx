@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Github, Angry } from "lucide-react"
+import { Github, Flame } from "lucide-react"
 import { ChangelogItemDialog } from "@/components/changelog-item-dialog"
 import { CommitRoastDialog } from "@/components/commit-roast-dialog"
 
@@ -29,55 +29,53 @@ export function ChangelogList({ entries, showRoastButtons = false }: ChangelogLi
             {/* Timeline dot */}
             <div className="absolute left-1/2 top-6 w-3 h-3 bg-zinc-400 dark:bg-zinc-600 rounded-full transform -translate-x-1/2 hidden sm:block"></div>
 
-            <ChangelogItemDialog entry={entry}>
-              <div className="bg-zinc-50 dark:bg-zinc-900 rounded-lg p-3 sm:p-4 lg:p-6 shadow-sm ring-1 ring-zinc-200 dark:ring-zinc-800 relative z-10 cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors touch-manipulation">
-                <div className="flex flex-col gap-3 sm:gap-4 mb-3 sm:mb-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 sm:gap-3 mb-2">
-                      {index === 0 && <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse flex-shrink-0"></div>}
-                      <h3 className="text-sm sm:text-lg lg:text-xl font-bold font-mono text-zinc-900 dark:text-zinc-100 leading-tight break-words">{entry.title}</h3>
-                    </div>
-                    <time className="text-xs sm:text-sm font-mono uppercase tracking-wider text-zinc-500 dark:text-zinc-400 block">
-                      {entry.date}
-                    </time>
+            <div className="bg-zinc-50 dark:bg-zinc-900 rounded-lg p-3 sm:p-4 lg:p-6 shadow-sm ring-1 ring-zinc-200 dark:ring-zinc-800 relative z-10">
+              <div className="flex flex-col gap-3 sm:gap-4 mb-3 sm:mb-4">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 sm:gap-3 mb-2">
+                    {index === 0 && <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse flex-shrink-0"></div>}
+                    <h3 className="text-sm sm:text-lg lg:text-xl font-bold font-mono text-zinc-900 dark:text-zinc-100 leading-tight break-words">{entry.title}</h3>
                   </div>
-                  <div className="flex flex-col xs:flex-row justify-end gap-2">
-                    {showRoastButtons && (
-                      <CommitRoastDialog entry={entry}>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="border-red-300 dark:border-red-600 text-red-700 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 bg-transparent min-h-[44px] whitespace-nowrap w-full xs:w-auto"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <Angry className="w-4 h-4 mr-1 sm:mr-2" />
-                          <span className="hidden sm:inline">Roast This</span>
-                          <span className="sm:hidden">Roast</span>
-                        </Button>
-                      </CommitRoastDialog>
-                    )}
-                    {entry.repoLink && (
+                  <time className="text-xs sm:text-sm font-mono uppercase tracking-wider text-zinc-500 dark:text-zinc-400 block">
+                    {entry.date}
+                  </time>
+                </div>
+                <div className="flex flex-col xs:flex-row justify-end gap-2">
+                  {showRoastButtons && (
+                    <CommitRoastDialog entry={entry}>
                       <Button
-                        asChild
                         variant="outline"
                         size="sm"
-                        className="border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 bg-transparent min-h-[44px] whitespace-nowrap w-full xs:w-auto"
-                        onClick={(e) => e.stopPropagation()}
+                        className="border-red-300 dark:border-red-600 text-red-700 dark:text-red-300 hover:bg-red-50 hover:text-red-800 hover:border-red-400 dark:hover:bg-red-900/20 bg-transparent min-h-[44px] whitespace-nowrap w-full xs:w-auto"
                       >
-                        <a href={entry.repoLink} target="_blank" rel="noopener noreferrer">
-                          <Github className="w-4 h-4 mr-1 sm:mr-2" />
-                          <span className="hidden sm:inline">View Commit</span>
-                          <span className="sm:hidden">View</span>
-                        </a>
+                        <Flame className="w-4 h-4 mr-1 sm:mr-2" />
+                        <span className="hidden sm:inline">Roast This</span>
+                        <span className="sm:hidden">Roast</span>
                       </Button>
-                    )}
-                  </div>
+                    </CommitRoastDialog>
+                  )}
+                  {entry.repoLink && (
+                    <Button
+                      asChild
+                      variant="outline"
+                      size="sm"
+                      className="border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 hover:text-zinc-900 hover:border-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 bg-transparent min-h-[44px] whitespace-nowrap w-full xs:w-auto"
+                    >
+                      <a href={entry.repoLink} target="_blank" rel="noopener noreferrer">
+                        <Github className="w-4 h-4 mr-1 sm:mr-2" />
+                        <span className="hidden sm:inline">View Commit</span>
+                        <span className="sm:hidden">View</span>
+                      </a>
+                    </Button>
+                  )}
                 </div>
-                <pre className="font-mono text-xs sm:text-sm text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap break-words overflow-x-auto bg-zinc-100/50 dark:bg-zinc-800/50 p-2 sm:p-3 rounded border">
+              </div>
+              <ChangelogItemDialog entry={entry}>
+                <pre className="font-mono text-xs sm:text-sm text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap break-words overflow-x-auto bg-zinc-100/50 dark:bg-zinc-800/50 p-2 sm:p-3 rounded border cursor-pointer hover:bg-zinc-200/50 dark:hover:bg-zinc-700/50 transition-colors">
                   {entry.summary}
                 </pre>
-              </div>
-            </ChangelogItemDialog>
+              </ChangelogItemDialog>
+            </div>
           </div>
         ))}
       </div>

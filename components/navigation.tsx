@@ -89,7 +89,7 @@ export function Navigation({
                   size="sm"
                   onClick={onRefreshCommits}
                   disabled={isLoading}
-                  className="font-mono bg-transparent border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 min-h-[36px] lg:min-h-[40px] px-2 whitespace-nowrap text-xs"
+                  className="font-mono !bg-white dark:!bg-zinc-800 !border-zinc-300 dark:!border-zinc-600 !text-zinc-700 dark:!text-zinc-300 hover:!bg-zinc-100 dark:hover:!bg-zinc-700 min-h-[36px] lg:min-h-[40px] px-2 whitespace-nowrap text-xs"
                 >
                   {isLoading ? (
                     <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
@@ -103,7 +103,7 @@ export function Navigation({
                   size="sm"
                   onClick={onSortByDate}
                   disabled={isSorting}
-                  className="font-mono bg-transparent border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 min-h-[36px] lg:min-h-[40px] px-2 whitespace-nowrap text-xs"
+                  className="font-mono !bg-white dark:!bg-zinc-800 !border-zinc-300 dark:!border-zinc-600 !text-zinc-700 dark:!text-zinc-300 hover:!bg-zinc-100 dark:hover:!bg-zinc-700 min-h-[36px] lg:min-h-[40px] px-2 whitespace-nowrap text-xs"
                 >
                   {isSorting ? (
                     <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
@@ -119,7 +119,7 @@ export function Navigation({
                     localStorage.removeItem('selectedRepository')
                     window.location.href = '/select-repo'
                   }}
-                  className="font-mono border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 min-h-[36px] lg:min-h-[40px] px-2 text-xs"
+                  className="font-mono !bg-white dark:!bg-zinc-800 !border-zinc-300 dark:!border-zinc-600 !text-zinc-700 dark:!text-zinc-300 hover:!bg-zinc-100 dark:hover:!bg-zinc-700 min-h-[36px] lg:min-h-[40px] px-2 text-xs"
                 >
                   <RotateCcw className="w-3 h-3 mr-1" />
                   <span className="hidden lg:inline">Switch</span>

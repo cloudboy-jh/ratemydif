@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog"
 import { Github, Calendar, FileText } from "lucide-react"
 
 type ChangelogEntry = {
@@ -22,7 +22,10 @@ export function ChangelogItemDialog({ entry, children }: ChangelogItemDialogProp
   return (
     <Dialog>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-[600px] w-[95vw] font-mono bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 max-h-[85vh] overflow-y-auto mx-auto">
+      <DialogContent 
+        className="sm:max-w-[600px] w-[95vw] font-mono bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 max-h-[85vh] overflow-y-auto mx-auto"
+        aria-describedby="changelog-dialog-description"
+      >
         <DialogHeader>
           <DialogTitle className="font-mono text-lg sm:text-xl lg:text-2xl text-zinc-900 dark:text-zinc-100 mb-3 sm:mb-4 break-words leading-tight">{entry.title}</DialogTitle>
         </DialogHeader>
@@ -47,12 +50,12 @@ export function ChangelogItemDialog({ entry, children }: ChangelogItemDialogProp
                 <p className="text-xs sm:text-sm font-mono text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-2">
                   Commit Link
                 </p>
-                <Button
-                  asChild
-                  variant="outline"
-                  size="sm"
-                  className="font-mono bg-transparent border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 min-h-[44px] w-full sm:w-auto"
-                >
+                 <Button
+                   asChild
+                   variant="outline"
+                   size="sm"
+                   className="font-mono bg-transparent border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 hover:text-zinc-900 hover:border-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 min-h-[44px] w-full sm:w-auto"
+                 >
                   <a href={entry.repoLink} target="_blank" rel="noopener noreferrer">
                     <Github className="w-4 h-4 mr-2" />
                     View Commit
@@ -79,12 +82,19 @@ export function ChangelogItemDialog({ entry, children }: ChangelogItemDialogProp
         </div>
 
         <div className="flex justify-end mt-4 sm:mt-6">
-          <Button
-            variant="outline"
-            className="font-mono bg-transparent border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 min-h-[44px]"
-          >
-            Close
-          </Button>
+          <DialogClose asChild>
+            <Button
+              variant="outline"
+              className="font-mono bg-transparent border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 hover:text-zinc-900 hover:border-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 min-h-[44px] w-full sm:w-auto"
+            >
+              Close
+            </Button>
+          </DialogClose>
+        </div>
+        
+        {/* Hidden description for accessibility */}
+        <div id="changelog-dialog-description" className="sr-only">
+          Dialog showing detailed information about a Git commit including date, repository link, and commit message
         </div>
       </DialogContent>
     </Dialog>
